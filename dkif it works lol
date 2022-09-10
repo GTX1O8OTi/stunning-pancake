@@ -1,35 +1,31 @@
---[[
-    run ('command', ...) ... = {} ou nada
-]]
-
 local COMMANDS_LINK = "https://raw.githubusercontent.com/setcvar/stunning-pancake/main/commands"
 
 local function getbody(link:string)
-    return request({Url = link, Method = "GET"}).Body
+    return request({Url = tostring(link), Method = "GET"}).Body
 end
 
-local function run(command:string, req_player:boolean, arguments)
-    local commands = {}
+local function run(command:string, arguments)
+    local args = {}
+    args.text = arguments
+    args.playerobjects = {}
 
-    local COMMANDS_BODY = request({
-        Url = COMMANDS_LINK,
-        Method = "GET",
-    }).Body
+    local COMMANDS_BODY = getbody(COMMANDS_LINK)
 
     local lines = string.split (COMMANDS_BODY, "\n")
 
     for key, value in pairs (lines) do
         local split = string.split(value, " ")
-        local command = split[1]
+        --local command = split[1]
         local link = split[2]
-        local reqplr = split[3] -- unused for now
+        --local reqplr = split[3] -- unused for now
 
-        local body = getbody(link)
-
-        commands[command] = loadstring(body)()
+        if link then
+            local body = getbody(link)
+    
+            local e = loadstring(body)()
+            e.func(args)
+        end
     end
-
-    commands[command].func (arguments)
 end
 
-run('print',false,'hi :)')
+run('print','hi :)')
