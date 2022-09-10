@@ -1,0 +1,35 @@
+--[[
+    run ('command', ...) ... = {} ou nada
+]]
+
+local COMMANDS_LINK = "https://raw.githubusercontent.com/setcvar/stunning-pancake/main/commands"
+
+local function getbody(link:string)
+    return request({Url = link, Method = "GET"}).Body
+end
+
+local function run(command:string, req_player:boolean, arguments)
+    local commands = {}
+
+    local COMMANDS_BODY = request({
+        Url = COMMANDS_LINK,
+        Method = "GET",
+    }).Body
+
+    local lines = string.split (COMMANDS_BODY, "\n")
+
+    for key, value in pairs (lines) do
+        local split = string.split(value, " ")
+        local command = split[1]
+        local link = split[2]
+        local reqplr = split[3] -- unused for now
+
+        local body = getbody(link)
+
+        commands[command] = loadstring(body)()
+    end
+
+    commands[command].func (arguments)
+end
+
+run('print',false,'hi :)')
