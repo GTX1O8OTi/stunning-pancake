@@ -8,81 +8,75 @@ local LOCALPLAYER = game.Players.LocalPlayer
 local PLAYERS = game.Players
 local CHARACTER = game.Players.LocalPlayer.Character
 
-function findplayer (playername: string): table
-	local name: table = {}
+
+local function alreadyontable (t, value)
+    for key, val in pairs (t) do
+        if val == value or key == value then return true else return false end
+    end
+end
+
+local function findplayer (playername: string): table
 	local obj: table = {}
 
+	
 	-- check to see if its $random which means select a random player
 	-- using $ for the rare cases the player has 'random' in their name
-	local plrnm: string = string.gsub(playername, '%$', '', 1)
+	local plrnm: string = string.gsub(playername, '%*', '', 1)
 	if plrnm == 'random' then
 		-- get all players
-		local getplayers = game.Players:GetPlayers()
+		local getplayers = PLAYERS:GetPlayers()
 		-- use math.random to select a random index starting from 1 to the length of getplayers
 		local random_index = math.random(1,#getplayers)
 		local player = getplayers[random_index]
-		table.insert (name, player.Name)
 		table.insert (obj, player)
 		plrnm = nil
-		return name, obj
-	end
-
-	local playernames = string.split (playername, ',')
-	for key, player in pairs (game.Players:GetPlayers()) do
-		for index, value in pairs (playernames) do
-			if string.lower (player.Name):match ("^" .. string.lower(value)) or
-			string.lower(player.Character.Humanoid.DisplayName):match("^" .. string.lower(value)) then
-				table.insert (name, player.Name)
-				table.insert (obj, player)
-			end
-		end
+		return obj
 	end
 
 	-- if everyone then just return every name and instance
 	if playername == 'all' then
-		for index, value in ipairs (game.Players:GetPlayers()) do
-			table.insert (name, value.Name)
+		for index, value in ipairs (PLAYERS:GetPlayers()) do
 			table.insert (obj, value)
 		end
-		return name, obj
+		return obj
 	end
 	
 	-- if others then return everyone except you
 	if playername == 'others' then
-		for index, value in ipairs (game.Players:GetPlayers()) do
+		for index, value in ipairs (PLAYERS:GetPlayers()) do
 			-- continue makes this one be skipped
-			if value == game.Players.LocalPlayer then
+			if value == LOCALPLAYER then
 				continue
 			end
-			table.insert (name, value.Name)
 			table.insert (obj, value)
 		end
-		return name, obj
+		return obj
 	end
 
 	if playername == 'me' then
-		table.insert (name, game.Players.LocalPlayer.Name)
-		table.insert (obj, game.Players.LocalPlayer)
-		return name, obj
+		table.insert (obj, LOCALPLAYER)
+		return obj
 	end
 
 	-- find the player and return it
-	for index, value in ipairs (game.Players:GetPlayers()) do
+	for index, value in ipairs (PLAYERS:GetPlayers()) do
 		if string.lower (value.Name):match ("^" .. string.lower (playername)) then
-			table.insert (name, value.Name)
-			table.insert (obj, value)
+			if not alreadyontable (obj, value) then
+                table.insert (obj, value)
+            end
 		end
 	end
 
-	for index, value in ipairs (game.Players:GetPlayers()) do
+	for index, value in ipairs (PLAYERS:GetPlayers()) do
 		if string.lower (value.DisplayName):match ("^" .. string.lower(playername)) or
 		string.lower(value.Character.Humanoid.DisplayName):match("^" .. string.lower(playername)) then
-			table.insert (name, value.Name)
-			table.insert (obj,value)
+			if not alreadyontable(obj, value) then
+                table.insert (obj,value)
+            end
 		end
 	end
 	
-	return name, obj
+	return obj
 end
 
 local function run(command:string, arguments)
@@ -104,8 +98,7 @@ local function run(command:string, arguments)
 
 		if cmd == command then
 			if reqplr == "true" then
-				print(true)
-				args.playernames,args.playerobjects = findplayer(player[1])
+				args.playerobjects = findplayer(player[1])
 				args.text = table.concat(player,' ', 2)
 			elseif reqplr == "false" then
 				args.text = table.concat(player, ' ')
@@ -114,7 +107,6 @@ local function run(command:string, arguments)
 			if link then
 				local body = request({Url = link, Method = "GET"}).Body
 				local e = loadstring(body)()
-				--setfenv(e.func, getfenv(0))
 				e.func(args)
 			end
 		end
