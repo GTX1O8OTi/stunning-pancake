@@ -1,6 +1,6 @@
 return {
     alias = {},
     func = function(hi:table)
-        print(hi.text.."hi")
+        hi.vars.CHARACTER.Humanoid.WalkSpeed = tonumber(hi.text)
     end
 }
