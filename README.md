@@ -1,6 +1,6 @@
-dont know what i'll do with this, just had an idea so i made it
+was experimenting with http requests
+bad "admin" script
 
-3 easy steps to overcomplicate simplicity:
-1. make it sound and look as hard as you can
-2. dont forget to skip important and necessary steps
-3. refuse to elaborate
+do whatever you want with it, add new commands, make a fork and do something entirely different with it, i dont care, just dont use it for profit.
+
+wont be improving it any further because school and other projects, and because my time is very limited rn
