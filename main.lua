@@ -92,7 +92,7 @@ local function run(command:string, arguments)
         local split = string.split(value, " ")
         --local command = split[1]
         local link = split[2]
-        local reqplr = split[3] -- unused for now
+        local reqplr = split[3]
         if reqplr == "true" then
             args.playernames,args.playerobjects = findplayer(player[1])
             args.text = table.concat(player,' ', 2)
@@ -102,7 +102,11 @@ local function run(command:string, arguments)
 
         if link then
             local body = getbody(link)
-    
+			args.constants = {
+				LOCALPLAYER = game.Players.LocalPlayer,
+				PLAYERS = game.Players,
+				CHARACTER = game.Players.LocalPlayer.Character,
+			}
             local e = loadstring(body)()
             setfenv(e.func, getfenv(0))
             e.func(args)
