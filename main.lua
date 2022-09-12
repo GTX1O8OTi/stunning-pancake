@@ -108,13 +108,13 @@ local function run(command:string, arguments)
 	
 			if link then
 				local body = getbody(link)
-				--[[args.consts = {
+				args.consts = {
 					LOCALPLAYER = game.Players.LocalPlayer,
 					PLAYERS = game.Players,
 					CHARACTER = game.Players.LocalPlayer.Character,
-				}]]
+				}
 				local e = loadstring(body)()
-				setfenv(e.func, getfenv(0))
+				--setfenv(e.func, getfenv(0))
 				e.func(args)
 			end
 		end

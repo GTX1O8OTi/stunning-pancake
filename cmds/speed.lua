@@ -1,6 +1,6 @@
 return {
     alias = {},
     func = function(hi:table)
-        CHARACTER.Humanoid.WalkSpeed = tonumber(hi.text)
+        hi.consts.CHARACTER.Humanoid.WalkSpeed = tonumber(hi.text)
     end
 }
