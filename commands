@@ -1,2 +1,2 @@
 print https://raw.githubusercontent.com/setcvar/stunning-pancake/main/cmds/print.lua false
-speed https://raw.githubusercontent.com/setcvar/stunning-pancake/main/cmds/speed.lua true
+speed https://raw.githubusercontent.com/setcvar/stunning-pancake/main/cmds/speed.lua false

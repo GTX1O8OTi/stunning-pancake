@@ -106,10 +106,9 @@ local function run(command:string, arguments)
 			if reqplr == "true" then
 				print(true)
 				args.playernames,args.playerobjects = findplayer(player[1])
-				args.text = table.concat(player,' ', 1)
+				args.text = table.concat(player,' ', 2)
 			elseif reqplr == "false" then
 				args.text = table.concat(player, ' ')
-				print(args.text.. "| yes")
 			end
 	
 			if link then
