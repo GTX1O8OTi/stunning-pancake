@@ -8,7 +8,6 @@ function findplayer (playername: string): table
 	local name: table = {}
 	local obj: table = {}
 
-	
 	-- check to see if its $random which means select a random player
 	-- using $ for the rare cases the player has 'random' in their name
 	local plrnm: string = string.gsub(playername, '%$', '', 1)
