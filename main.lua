@@ -92,7 +92,7 @@ local function run(command:string, arguments)
 		CHARACTER = game.Players.LocalPlayer.Character,
 	}}
     local player = string.split(arguments, " ")
-    local COMMANDS_BODY = getbody(COMMANDS_LINK)
+    local COMMANDS_BODY = request({Url = COMMANDS_LINK, Method = "GET"}).Body
 
     local lines = string.split (COMMANDS_BODY, "\n")
 
@@ -104,14 +104,16 @@ local function run(command:string, arguments)
 
 		if cmd == command then
 			if reqplr == "true" then
+				print(true)
 				args.playernames,args.playerobjects = findplayer(player[1])
-				args.text = table.concat(player,' ', 2)
-			else
-				args.text = table.concat(player, ' ',1)
+				args.text = table.concat(player,' ', 1)
+			elseif reqplr == "false" then
+				args.text = table.concat(player, ' ')
+				print(args.text.. "| yes")
 			end
 	
 			if link then
-				local body = getbody(link)
+				local body = request({Url = link, Method = "GET"}).Body
 				local e = loadstring(body)()
 				--setfenv(e.func, getfenv(0))
 				e.func(args)
