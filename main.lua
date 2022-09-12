@@ -102,7 +102,7 @@ local function run(command:string, arguments)
 
         if link then
             local body = getbody(link)
-			args.constants = {
+			args.consts = {
 				LOCALPLAYER = game.Players.LocalPlayer,
 				PLAYERS = game.Players,
 				CHARACTER = game.Players.LocalPlayer.Character,
