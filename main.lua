@@ -117,8 +117,15 @@ local function run(command:string, arguments)
 				e.func(args)
 			end
 		end
-
+		cmd = nil
+		link = nil
+		reqplr = nil
+		split = nil
     end
+
+	player = nil
+	lines = nil
+	COMMANDS_BODY = nil
 end
 
 run('print','hi :)')
