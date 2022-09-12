@@ -86,7 +86,11 @@ function findplayer (playername: string): table
 end
 
 local function run(command:string, arguments)
-    local args = {}
+    local args = {vars = {
+		LOCALPLAYER = game.Players.LocalPlayer,
+		PLAYERS = game.Players,
+		CHARACTER = game.Players.LocalPlayer.Character,
+	}}
     local player = string.split(arguments, " ")
     local COMMANDS_BODY = getbody(COMMANDS_LINK)
 
@@ -108,11 +112,6 @@ local function run(command:string, arguments)
 	
 			if link then
 				local body = getbody(link)
-				args.vars = {
-					LOCALPLAYER = game.Players.LocalPlayer,
-					PLAYERS = game.Players,
-					CHARACTER = game.Players.LocalPlayer.Character,
-				}
 				local e = loadstring(body)()
 				--setfenv(e.func, getfenv(0))
 				e.func(args)
