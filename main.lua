@@ -80,6 +80,8 @@ local function findplayer (playername: string): table
 end
 
 local function run(command:string, arguments)
+	command = string.lower(command)
+	arguments = string.lower(arguments)
     local args = {vars = {
 		LOCALPLAYER = game.Players.LocalPlayer,
 		PLAYERS = game.Players,
@@ -120,5 +122,3 @@ local function run(command:string, arguments)
 	lines = nil
 	COMMANDS_BODY = nil
 end
-
-run('print','hi :)')
