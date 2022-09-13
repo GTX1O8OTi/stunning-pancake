@@ -121,16 +121,16 @@ end]]
 local function run(text)
 	local text = string.lower(text)
 	local t = {}
-	local t_cmd = t[1]
 	local command, arguments = "",{text = "", vars = {}}
-
+	
 	arguments.vars.LOCALPLAYER = game.Players.LocalPlayer
 	arguments.vars.CHARACTER = game.Players.LocalPlayer.Character
 	arguments.vars.PLAYERS = game.Players
-
+	
 	for word in string.gmatch(text,"%g+") do
 		table.insert(t,word)
 	end
+	local t_cmd = t[1]
 
 	local BODY = request({Url=COMMANDS_LINK, Method = "GET"}).Body
 	local lines = string.split(BODY,"\n")
@@ -140,7 +140,14 @@ local function run(text)
 		local command = line[1]
 		local link = line[2]
 		local req_player = link[3]
-		
+		local alias = string.split(table.concat(line," ",4), " ")
+
+		for key, value in pairs (alias) do
+			if t_cmd == value then
+				t_cmd = command
+			end
+		end
+
 		if command == t_cmd then
 			local raw = request({Url=link, Method="GET"}).Body
 			if raw then
