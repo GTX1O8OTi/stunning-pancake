@@ -123,7 +123,7 @@ local function run(text)
 	local t = {}
 	local t_cmd = t[1]
 	local command, arguments = "",{text = "", vars = {}}
-	
+
 	arguments.vars.LOCALPLAYER = game.Players.LocalPlayer
 	arguments.vars.CHARACTER = game.Players.LocalPlayer.Character
 	arguments.vars.PLAYERS = game.Players
@@ -140,14 +140,7 @@ local function run(text)
 		local command = line[1]
 		local link = line[2]
 		local req_player = link[3]
-		local alias = string.split(table.concat(link," ",4), " ")
-
-		for key, value in pairs (alias) do
-			if t_cmd == value then
-				t_cmd = command
-			end
-		end
-
+		
 		if command == t_cmd then
 			local raw = request({Url=link, Method="GET"}).Body
 			if raw then
