@@ -2,7 +2,7 @@ hi
 
 do
 ```lua
-run("command","params")
+run("command args")
 ```
 
 and it'll work :)
