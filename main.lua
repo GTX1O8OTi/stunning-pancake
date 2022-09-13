@@ -73,51 +73,6 @@ local function findplayer (playername: string): table
 	return obj
 end
 
---[[
-local function run(command:string, arguments)
-	command = string.lower(command)
-	arguments = string.lower(arguments)
-    local args = {vars = {
-		LOCALPLAYER = game.Players.LocalPlayer,
-		PLAYERS = game.Players,
-		CHARACTER = game.Players.LocalPlayer.Character,
-	}}
-    local player = string.split(arguments, " ")
-    local COMMANDS_BODY = request({Url = COMMANDS_LINK, Method = "GET"}).Body
-
-    local lines = string.split (COMMANDS_BODY, "\n")
-
-    for number, line in pairs (lines) do
-        local split = string.split(line, " ")
-        local cmd = split[1]
-        local link = split[2]
-        local reqplr = split[3]
-
-		if cmd == command then
-			if reqplr == "true" then
-				args.playerobjects = findplayer(player[1])
-				args.text = table.concat(player,' ', 2)
-			elseif reqplr == "false" then
-				args.text = table.concat(player, ' ')
-			end
-	
-			if link then
-				local body = request({Url = link, Method = "GET"}).Body
-				local e = loadstring(body)()
-				e.func(args)
-			end
-		end
-		cmd = nil
-		link = nil
-		reqplr = nil
-		split = nil
-    end
-
-	player = nil
-	lines = nil
-	COMMANDS_BODY = nil
-end]]
-
 local function run(text)
 	local text = string.lower(text)
 	local t = {}
