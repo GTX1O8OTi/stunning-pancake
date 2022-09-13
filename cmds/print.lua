@@ -1,5 +1,5 @@
 return {
 func = function(hi:table)
-print(hi.text.."hi")
+print(hi.text)
 end
 }
