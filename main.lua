@@ -122,7 +122,11 @@ local function run(text)
 	local text = string.lower(text)
 	local t = {}
 	local t_cmd = t[1]
-	local command, arguments = "",{text = ""}
+	local command, arguments = "",{text = "", vars = {}}
+	
+	arguments.vars.LOCALPLAYER = game.Players.LocalPlayer
+	arguments.vars.CHARACTER = game.Players.LocalPlayer.Character
+	arguments.vars.PLAYERS = game.Players
 
 	for word in string.gmatch(text,"%g+") do
 		table.insert(t,word)
