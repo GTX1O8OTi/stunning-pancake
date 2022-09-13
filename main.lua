@@ -1,9 +1,5 @@
 local COMMANDS_LINK = "https://raw.githubusercontent.com/setcvar/stunning-pancake/main/commands"
 
-local function getbody(link:string)
-    return request({Url = tostring(link), Method = "GET"}).Body
-end
-
 local LOCALPLAYER = game.Players.LocalPlayer
 local PLAYERS = game.Players
 local CHARACTER = game.Players.LocalPlayer.Character
