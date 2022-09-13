@@ -17,4 +17,4 @@ return {func = function(hi) print('hi mom') end}
  
  "name link true/false"
 
- the last one the true or false part is so the run function will pass the player specified on the argument
+ the last one the true or false part is so the run function will pass the player specified on the argument so less manual work :)

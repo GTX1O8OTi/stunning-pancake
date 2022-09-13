@@ -13,7 +13,6 @@ end
 local function findplayer (playername: string): table
 	local obj: table = {}
 
-	
 	-- check to see if its $random which means select a random player
 	-- using $ for the rare cases the player has 'random' in their name
 	local plrnm: string = string.gsub(playername, '%*', '', 1)
@@ -74,6 +73,7 @@ local function findplayer (playername: string): table
 	return obj
 end
 
+--[[
 local function run(command:string, arguments)
 	command = string.lower(command)
 	arguments = string.lower(arguments)
@@ -87,8 +87,8 @@ local function run(command:string, arguments)
 
     local lines = string.split (COMMANDS_BODY, "\n")
 
-    for key, value in pairs (lines) do
-        local split = string.split(value, " ")
+    for number, line in pairs (lines) do
+        local split = string.split(line, " ")
         local cmd = split[1]
         local link = split[2]
         local reqplr = split[3]
@@ -116,4 +116,48 @@ local function run(command:string, arguments)
 	player = nil
 	lines = nil
 	COMMANDS_BODY = nil
+end]]
+
+local function run(text)
+	local text = string.lower(text)
+	local t = {}
+	local t_cmd = t[1]
+	local command, arguments = "",{text = ""}
+
+	for word in string.gmatch(text,"%g+") do
+		table.insert(t,word)
+	end
+
+	local BODY = request({Url=COMMANDS_LINK, Method = "GET"}).Body
+	local lines = string.split(BODY,"\n")
+
+	for key, line in pairs (lines) do
+		local line = string.split(line, " ")
+		local command = line[1]
+		local link = line[2]
+		local req_player = link[3]
+		local alias = string.split(table.concat(link," ",4), " ")
+
+		for key, value in pairs (alias) do
+			if t_cmd == value then
+				t_cmd = command
+			end
+		end
+
+		if command == t_cmd then
+			local raw = request({Url=link, Method="GET"}).Body
+			if raw then
+
+				if req_player == "true" then
+					arguments.playerobjects = findplayer(t[2])
+					arguments.text = table.concat(t," ",3)
+				elseif req_player == "false" then
+					arguments.text = table.concat(t," ", 2)
+				end
+
+				local load = loadstring(raw)()
+				load.func(arguments)
+			end
+		end
+	end
 end
