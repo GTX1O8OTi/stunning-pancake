@@ -121,7 +121,7 @@ end]]
 local function run(text)
 	local text = string.lower(text)
 	local t = {}
-	local command, arguments = "",{text = "", vars = {}}
+	local arguments = {vars = {}}
 	
 	arguments.vars.LOCALPLAYER = game.Players.LocalPlayer
 	arguments.vars.CHARACTER = game.Players.LocalPlayer.Character
@@ -139,7 +139,7 @@ local function run(text)
 		local line = string.split(line, " ")
 		local command = line[1]
 		local link = line[2]
-		local req_player = link[3]
+		local req_player = line[3]
 		local alias = string.split(table.concat(line," ",4), " ")
 
 		for key, value in pairs (alias) do
@@ -151,12 +151,12 @@ local function run(text)
 		if command == t_cmd then
 			local raw = request({Url=link, Method="GET"}).Body
 			if raw then
-
 				if req_player == "true" then
 					arguments.playerobjects = findplayer(t[2])
 					arguments.text = table.concat(t," ",3)
+					print(arguments.text)
 				elseif req_player == "false" then
-					arguments.text = table.concat(t," ", 2)
+					arguments.text = table.concat(t," ",2)
 				end
 
 				local load = loadstring(raw)()
