@@ -4,7 +4,6 @@ local LOCALPLAYER = game.Players.LocalPlayer
 local PLAYERS = game.Players
 local CHARACTER = game.Players.LocalPlayer.Character
 
-
 local function alreadyontable (t, value)
     for key, val in pairs (t) do
         if val == value or key == value then return true else return false end
