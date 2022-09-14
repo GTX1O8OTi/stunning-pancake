@@ -1,9 +1,5 @@
 local COMMANDS_LINK = "https://raw.githubusercontent.com/setcvar/stunning-pancake/main/commands"
 
-local LOCALPLAYER = game.Players.LocalPlayer
-local PLAYERS = game.Players
-local CHARACTER = game.Players.LocalPlayer.Character
-
 local function alreadyontable (t, value)
     for key, val in pairs (t) do
         if val == value or key == value then return true else return false end
@@ -11,6 +7,8 @@ local function alreadyontable (t, value)
 end
 
 local function findplayer (playername: string): table
+	local LOCALPLAYER = game.Players.LocalPlayer
+	local PLAYERS = game.Players
 	local obj: table = {}
 
 	-- check to see if its $random which means select a random player
@@ -69,7 +67,6 @@ local function findplayer (playername: string): table
             end
 		end
 	end
-	
 	return obj
 end
 
