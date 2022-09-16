@@ -1,4 +1,5 @@
 local COMMANDS_LINK = "https://raw.githubusercontent.com/setcvar/stunning-pancake/main/commands"
+local GUI_LINK = "https://raw.githubusercontent.com/setcvar/stunning-pancake/main/gui/gui.lua"
 
 local function alreadyontable (t, value)
     for key, val in pairs (t) do
@@ -117,3 +118,27 @@ local function run(text)
 		end
 	end
 end
+
+local gui_body = request({Url = GUI_LINK, Method = "GET"}).Body
+local ScreenGui:ScreenGui, Frame:Frame, TextBox:TextBox = loadstring(gui_body)()
+
+game:GetService ("ContextActionService"):BindAction (
+	"Focus",
+	function()
+		TextBox:CaptureFocus()
+		spawn (function()
+			repeat TextBox.Text = "" until TextBox.Text == ""
+		end)
+	end,
+	false,
+	Enum.KeyCode.RightBracket
+)
+
+TextBox.FocusLost:Connect (
+	function (key)
+		if key then
+			run (TextBox.Text)
+			TextBox.Text = ""
+		end
+	end
+)
