@@ -48,16 +48,20 @@ local CMD_TYPE = {
 	PLAYER = 3,
 	CMD = 4,
 	NONE = 5,
+	INF = 6,
 }
 
 local cmd_table = {}
 
-local function Services()
-	local servs = {
-		Players = game:GetService("Players"),
-		Workspace = game:getService("Workspace"),
-	}
-	return servs
+local Services = {
+	Players = game:GetService("Players"),
+	Workspace = game:GetService("Workspace"),
+	Teleport = game:GetService("TeleportService"),
+}
+
+local function GetCharacter()
+	local character = Services.Players.LocalPlayer.Character or Services.Players.LocalPlayer.CharacterAdded:Wait()
+	return character
 end
 
 cmd_table[#cmd_table+1] = {
@@ -65,7 +69,7 @@ cmd_table[#cmd_table+1] = {
 	desc = "Changes your walkspeed",
 	ctype = {CMD_TYPE.NUMBER},
 	load = function(args)
-		local character = Services().Workspace:FindFirstChild(Services().Players.LocalPlayer.Name)
+		local character = Services.Workspace:FindFirstChild(Services.Players.LocalPlayer.Name)
 		if character then
 			character.Humanoid.WalkSpeed = args[1]
 		end
@@ -77,9 +81,124 @@ cmd_table[#cmd_table+1] = {
 	desc = "Changes your jumppower",
 	ctype = {CMD_TYPE.NUMBER},
 	load = function(args)
-		local character = Services().Workspace:FindFirstChild(Services().Players.LocalPlayer.Name)
+		local character = Services.Workspace:FindFirstChild(Services.Players.LocalPlayer.Name)
 		if character then
 			character.Humanoid.JumpPower = args[1]
+		end
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"print", "p"},
+	desc = "",
+	ctype = {CMD_TYPE.INF},
+	load = function(args)
+		print(args[1])
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"spin"},
+	desc = "you spin",
+	ctype = {CMD_TYPE.NUMBER},
+	load = function(args)
+		local cache = {RootPart = GetCharacter().HumanoidRootPart, Humanoid = GetCharacter().Humanoid}
+		local spin_speed = args[1] or 5
+		if cache.Humanoid.RigType == Enum.RigType.R15 then
+			local av = Instance.new("AngularVelocity")
+			av.AngularVelocity = Vector3.new(0, spin_speed, 0)
+			av.Parent = cache.RootPart
+			av.MaxTorque = Vector3.new(0, math.huge, 0)
+			av.RelativeTo = Enum.ActuatorRelativeTo.Attachment0
+			av.Attachment0 = cache.RootPart.RootAttachment
+			av:SetAttribute("cf", 0)
+			
+		else
+			local bav = Instance.new("BodyAngularVelocity")
+			bav.AngularVelocity = Vector3.new(0, spin_speed, 0)
+			bav.MaxTorque = Vector3.new(0, math.huge, 0)
+			bav.Parent = cache.RootPart
+			bav:SetAttribute("cf", 0)
+		end 
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"unspin"},
+	desc = "no spin :(",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		local cache = {RootPart = GetCharacter().HumanoidRootPart}
+		local spin = cache.RootPart:FindFirstChild("AngularVelocity") or cache.RootPart:FindFirstChild("BodyAngularVelocity")
+		if spin:GetAttribute("cf") then
+			spin:Destroy()
+		end
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"rejoin", "rj"},
+	desc = "rejoin game :)",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		Services.Players.LocalPlayer:Kick("You're banned for 99999 days")
+		task.wait(0.3)
+		if #Services.Players:GetPlayers() <= 1 then
+			Services.Teleport:Teleport(game.PlaceId, Services.Players.LocalPlayer)
+		else
+			Services.Teleport:TeleportToPlaceInstance(game.PlaceId, game.JobId, Services.Players.LocalPlayer)
+		end
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"hitbox"},
+	desc = "You see stuff you shouldn't see lol",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		local cache = {parts = Services.Workspace:GetDescendants()}
+		if #cache.parts > 2000 then
+			print("This will lag alot")
+		end
+		for _, v in ipairs (cache.parts) do
+			if not v:IsA("BasePart") then continue end
+			local box = Instance.new("SelectionBox")
+			box:SetAttribute("cf", 0)
+			box.Parent = v
+			box.LineThickness = 0.015
+			box.Adornee = v
+			if v.Transparency > 0 then
+				box.Color3 = Color3.fromRGB(255,201,252)
+			else
+				box.Color3 = Color3.fromRGB(201,248,255)
+			end
+		end
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"unhitbox"},
+	desc = "e",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		local cache = {parts = Services.Workspace:GetDescendants()}
+		for _,v in ipairs (cache.parts) do
+			if not v:IsA("BasePart") then continue end
+			if v:GetAttribute("cf") then
+				v:Destroy()
+			end
+		end
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"cmds", "commands"},
+	desc = "Prints commands",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		for i = 1, #cmd_table, 1 do
+			local e = table.concat(cmd_table[i].names, " ")
+			print(e)
 		end
 	end,
 }
@@ -117,6 +236,8 @@ local function RunCommand (input)
 				args[i] = tonumber(cache.str_split2[i])
 			elseif command.ctype[i] == CMD_TYPE.PLAYER then
 				args[i] = GetCommandPlayer(cache.str_split2[i])
+			elseif command.ctype[i] == CMD_TYPE.INF then
+				args[i] = table.concat(cache.str_split2, " ")
 			end
 			
 		end
@@ -125,3 +246,12 @@ local function RunCommand (input)
 	end
 	
 end
+
+local uis = game.UserInputService
+uis.InputBegan:Connect(function(input, e)
+	if e then return end
+	
+	if input.KeyCode == Enum.KeyCode.E then
+		RunCommand("cmds")
+	end
+end)
