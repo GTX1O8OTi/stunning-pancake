@@ -53,10 +53,32 @@ local CMD_TYPE = {
 
 local cmd_table = {}
 
+local coroutines = {}
+local CoroutineManager = {}
+
+function CoroutineManager:Create(name, func)
+	local c = coroutine.create(func)
+	coroutines[name] = c
+	return c
+end
+
+function CoroutineManager:Start(name)
+	coroutine.resume(coroutines[name])
+end
+
+function CoroutineManager:Close(name)
+	coroutine.close(coroutines[name])
+end
+
+function CoroutineManager:Yield(name)
+	coroutine.yield(coroutines[name])
+end
+
 local Services = {
 	Players = game:GetService("Players"),
 	Workspace = game:GetService("Workspace"),
 	Teleport = game:GetService("TeleportService"),
+	RunS = game:GetService("RunService"),
 }
 
 local function GetCharacter()
@@ -111,14 +133,14 @@ cmd_table[#cmd_table+1] = {
 			av.MaxTorque = Vector3.new(0, math.huge, 0)
 			av.RelativeTo = Enum.ActuatorRelativeTo.Attachment0
 			av.Attachment0 = cache.RootPart.RootAttachment
-			av:SetAttribute("cf", 0)
+			av:SetAttribute("cf", 1)
 			
 		else
 			local bav = Instance.new("BodyAngularVelocity")
 			bav.AngularVelocity = Vector3.new(0, spin_speed, 0)
 			bav.MaxTorque = Vector3.new(0, math.huge, 0)
 			bav.Parent = cache.RootPart
-			bav:SetAttribute("cf", 0)
+			bav:SetAttribute("cf", 1)
 		end 
 	end,
 }
@@ -160,19 +182,24 @@ cmd_table[#cmd_table+1] = {
 		if #cache.parts > 2000 then
 			print("This will lag alot")
 		end
-		for _, v in ipairs (cache.parts) do
-			if not v:IsA("BasePart") then continue end
-			local box = Instance.new("SelectionBox")
-			box:SetAttribute("cf", 0)
-			box.Parent = v
-			box.LineThickness = 0.015
-			box.Adornee = v
-			if v.Transparency > 0 then
-				box.Color3 = Color3.fromRGB(255,201,252)
-			else
-				box.Color3 = Color3.fromRGB(201,248,255)
+		local function forloop()
+			for _, v in ipairs (cache.parts) do
+				if not v:IsA("BasePart") then continue end
+				local box = Instance.new("SelectionBox")
+				box:SetAttribute("cf", 1)
+				box.Parent = v
+				box.LineThickness = 0.015
+				box.Adornee = v
+				if v.Transparency > 0 then
+					box.Color3 = Color3.fromRGB(255,201,252)
+				else
+					box.Color3 = Color3.fromRGB(201,248,255)
+				end
 			end
 		end
+		
+		local c = CoroutineManager:Create("hitboxloop", forloop)
+		CoroutineManager:Start("hitboxloop")
 	end,
 }
 
@@ -182,12 +209,16 @@ cmd_table[#cmd_table+1] = {
 	ctype = {CMD_TYPE.NONE},
 	load = function()
 		local cache = {parts = Services.Workspace:GetDescendants()}
-		for _,v in ipairs (cache.parts) do
-			if not v:IsA("BasePart") then continue end
-			if v:GetAttribute("cf") then
-				v:Destroy()
+		local function forloop()
+			for _,v in ipairs (cache.parts) do
+				if not v:IsA("BasePart") then continue end
+				if v:GetAttribute("cf") then
+					v:Destroy()
+				end
 			end
 		end
+		local c = CoroutineManager:Create("unhitboxloop", forloop)
+		CoroutineManager:Start("hitboxloop")
 	end,
 }
 
@@ -202,6 +233,48 @@ cmd_table[#cmd_table+1] = {
 		end
 	end,
 }
+
+cmd_table[#cmd_table+1] = {
+	names = {"noclip", "nc"},
+	desc = "Noclips you into the backrooms",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		local cache = {parts = Services.Players.LocalPlayer.Character:GetDescendants()}
+		
+		for _,v in ipairs (cache.parts) do
+			if not v:IsA("BasePart") then continue end
+			if v.CanCollide == false then continue end
+			v.CanCollide = false
+			v:SetAttribute("cf", true)
+		end
+		
+		local function nc()
+			Services.RunS.Stepped:Connect(function()
+				for _,v in ipairs(Services.Players.LocalPlayer.Character:GetDescendants()) do
+					if not v:IsA("BasePart") then continue end
+					if v:GetAttribute("cf") then
+						v.CanCollide = false
+					end
+				end
+			end)
+		end
+
+		local c = CoroutineManager:Create("noclip", nc)
+		CoroutineManager:Start(c)
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"goto", "to"},
+	desc = "tp to others",
+	ctype = {CMD_TYPE.PLAYER},
+	load = function(args)
+		for i = 1, #args do
+			Services.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = args[i].Character.HumanoidRootPart.CFrame
+		end
+	end,
+}
+
 
 local function RunCommand (input)
 	local cache = {
@@ -242,7 +315,12 @@ local function RunCommand (input)
 			
 		end
 		
-		command.load(args)
+		local function run()
+			command.load(args)
+		end
+		
+		local c = CoroutineManager:Create("cmd_execution", run)
+		CoroutineManager:Start("cmd_execution")
 	end
 	
 end
@@ -252,6 +330,6 @@ uis.InputBegan:Connect(function(input, e)
 	if e then return end
 	
 	if input.KeyCode == Enum.KeyCode.E then
-		RunCommand("cmds")
+		RunCommand("to me,others")
 	end
 end)
