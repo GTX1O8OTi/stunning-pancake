@@ -1,3 +1,5 @@
+if not (game:IsLoaded()) then repeat task.wait() until game:IsLoaded() end
+
 local function GetCommandPlayer (Text)
 	local SpecialUseCases = {"all","me", "random", "others"}
 	local selected_player = {}
@@ -37,72 +39,89 @@ local function GetCommandPlayer (Text)
 			selected_player[#selected_player+1] = GetCommandPlayer(v)[1]
 		end
 	end
-
-	if DEBUG then
-		print(selected_player)
-	end
-
 	return selected_player
 end
 
-local function RemoveCommands (_table)
-	local MAX_ITERATIONS = #_table
-	for i = 1, MAX_ITERATIONS do
-		_table[i] = nil
-	end
+local CMD_TYPE = {
+	STRING = 1,
+	NUMBER = 2,
+	PLAYER = 3,
+	CMD = 4,
+	NONE = 5,
+}
+
+local cmd_table = {}
+
+local function Services()
+	local servs = {
+		Players = game:GetService("Players"),
+		Workspace = game:getService("Workspace"),
+	}
+	return servs
 end
 
-local function RequestCMDLinkBody()
-	return request({Url = "https://raw.githubusercontent.com/setcvar/stunning-pancake/main/commands", Method = "GET"}).Body
-end
-
-local function CreateCmdTable(Name, Link, Req_player, Alias)
-	local cmd_table = {}
-	cmd_table.Name = Name
-	cmd_table.Link = Link
-	cmd_table.Req_player = Req_player
-	cmd_table.Alias = Alias
-	return cmd_table
-end
-
-local function GetCommand(input)
-	local body = RequestCMDLinkBody()
-	local lines = string.split (body, "\n")
-	local MAX_ITERATIONS = #lines
-	for i = 1, MAX_ITERATIONS do
-		local current_line = string.split(lines[i], " ")
-
-		if input then
-			local alias = string.split(table.concat(current_line, " ", 4), " ")
-			return CreateCmdTable (current_line[1],current_line[2], current_line[3], alias)
-
-		else
-			local current_line = string.split(lines[i], " ")
-
-			local MAX_ITERATIONS = #current_line
-
-			for i = 1, MAX_ITERATIONS do
-				local alias = string.split(table.concat(current_line, " ", 4), " ")
-				if alias[i] == input then
-					return CreateCmdTable (current_line[1],current_line[2], current_line[3], alias)
-				end
-			end
+cmd_table[#cmd_table+1] = {
+	names = {"speed", "ws"},
+	desc = "Changes your walkspeed",
+	ctype = {CMD_TYPE.NUMBER},
+	load = function(args)
+		local character = Services().Workspace:FindFirstChild(Services().Players.LocalPlayer.Name)
+		if character then
+			character.Humanoid.WalkSpeed = args[1]
 		end
-	end
-end
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"jumppower", "jp"},
+	desc = "Changes your jumppower",
+	ctype = {CMD_TYPE.NUMBER},
+	load = function(args)
+		local character = Services().Workspace:FindFirstChild(Services().Players.LocalPlayer.Name)
+		if character then
+			character.Humanoid.JumpPower = args[1]
+		end
+	end,
+}
 
 local function RunCommand (input)
-	local word = string.split(input, " ")
-	local cmd = GetCommand(word[1])
-
-	local arguments = {}
-	if cmd.Req_player == "true" then
-		arguments.playerobjects = GetCommandPlayer(word[2])
-		arguments.text = table.concat(word, " ", 3)
-	else
-		arguments.text = table.concat(word, " ", 2)
+	local cache = {
+		str_split1 = string.split(input, " "),
+		str_split2 = string.split(table.concat(string.split(input, " "), " ", 2), " "),
+		cmd_table = cmd_table,
+	}
+	
+	local command = cache.str_split1[1]
+	
+	for i,v in ipairs (cache.cmd_table) do
+		
+		for i = 1, #v.names,1 do
+			if v.names[i] == command then
+				command = v
+			end
+		end
+		
 	end
-
-	local load = loadstring(cmd.Link)()
-	load.func (arguments)
+	
+	local args = {}
+	
+	if typeof(command) == "table" then
+		
+		local num_args = #command.ctype
+		
+		for i = 1, num_args, 1 do
+			
+			if command.ctype[i] == CMD_TYPE.STRING then
+				args[i] = tostring(cache.str_split2[i])
+			elseif command.ctype[i] == CMD_TYPE.NUMBER then
+				args[i] = tonumber(cache.str_split2[i])
+			elseif command.ctype[i] == CMD_TYPE.PLAYER then
+				args[i] = GetCommandPlayer(cache.str_split2[i])
+			end
+			
+		end
+		
+		command.load(args)
+	end
+	
 end
