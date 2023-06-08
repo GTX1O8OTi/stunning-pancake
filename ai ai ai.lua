@@ -275,6 +275,36 @@ cmd_table[#cmd_table+1] = {
 	end,
 }
 
+cmd_table[#cmd_table+1] = {
+	names = {"view"},
+	desc = "Changes your camera to someone else",
+	ctype = {CMD_TYPE.PLAYER},
+	load = function(args)
+		local player
+		for i = 1, #args do
+			Services.Workspace.CurrentCamera.CameraSubject = args[i].Character.Humanoid
+			player = args[i]
+		end
+		
+		local function yeet()
+			player.Character.Humanoid.Died:Connect(function()
+				Services.Workspace.CurrentCamera.CameraSubject = Services.Players.LocalPlayer.Character.Humanoid
+			end)
+		end
+		
+		local c = CoroutineManager:Create("view", yeet)
+		CoroutineManager:Start(c)
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"unview"},
+	desc = "Stops viewing someone else",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		CoroutineManager:Close("view")
+	end,
+}
 
 local function RunCommand (input)
 	local cache = {
