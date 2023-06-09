@@ -1,9 +1,14 @@
 if not (game:IsLoaded()) then repeat task.wait() until game:IsLoaded() end
 
+local error = erroruiconsole or error
+local warn = warnuiconsole or warn
+local print = printuiconsole or print
+
 local function GetCommandPlayer (Text)
 	local SpecialUseCases = {"all","me", "random", "others"}
 	local selected_player = {}
-	local Players = game.Players:GetPlayers()
+	
+	local Players = game:GetService("Players"):GetPlayers()
 	local player = game:GetService("Players").LocalPlayer
 
 	local cases = {
@@ -56,22 +61,43 @@ local cmd_table = {}
 local coroutines = {}
 local CoroutineManager = {}
 
-function CoroutineManager:Create(name, func)
+function CoroutineManager:Create(name, func): thread
 	local c = coroutine.create(func)
 	coroutines[name] = c
 	return c
 end
 
-function CoroutineManager:Start(name)
-	coroutine.resume(coroutines[name])
+function CoroutineManager:Start(cor: string | thread)
+	if typeof(cor) == "thread" then
+		coroutine.resume(cor)
+	else
+		coroutine.resume(coroutines[cor])
+	end
 end
 
-function CoroutineManager:Close(name)
-	coroutine.close(coroutines[name])
+function CoroutineManager:Close(cor: string | thread)
+	if typeof(cor) == "thread" then
+		coroutine.close(cor)
+	else
+		coroutine.close(coroutines[cor])
+	end
 end
 
-function CoroutineManager:Yield(name)
-	coroutine.yield(coroutines[name])
+function CoroutineManager:Yield(cor: string | thread)
+	if typeof(cor) == "thread" then
+		coroutine.yield(cor)
+		
+	else
+		coroutine.yield(coroutines[cor])
+	end
+end
+
+function CoroutineManager:Status(cor: string | thread)
+	if typeof(cor) == "thread" then
+		return coroutine.status(cor)
+	else
+		return coroutine.status(coroutines[cor])
+	end
 end
 
 local Services = {
@@ -79,9 +105,12 @@ local Services = {
 	Workspace = game:GetService("Workspace"),
 	Teleport = game:GetService("TeleportService"),
 	RunS = game:GetService("RunService"),
+	Http = game:GetService("HttpService"),
+	RepStorage = game:GetService("ReplicatedStorage"),
+	UIS = game:GetService("UserInputService"),
 }
 
-local function GetCharacter()
+local function GetCharacter(): Model?
 	local character = Services.Players.LocalPlayer.Character or Services.Players.LocalPlayer.CharacterAdded:Wait()
 	return character
 end
@@ -178,7 +207,12 @@ cmd_table[#cmd_table+1] = {
 	desc = "You see stuff you shouldn't see lol",
 	ctype = {CMD_TYPE.NONE},
 	load = function()
-		local cache = {parts = Services.Workspace:GetDescendants()}
+		local cache = {parts = nil}
+		local c = CoroutineManager:Create("_t1", function()
+			cache.parts = Services.Workspace:GetDescendants()
+		end)
+		CoroutineManager:Start("_t1")
+		repeat task.wait() until cache.parts ~= nil
 		if #cache.parts > 2000 then
 			print("This will lag alot")
 		end
@@ -208,17 +242,16 @@ cmd_table[#cmd_table+1] = {
 	desc = "e",
 	ctype = {CMD_TYPE.NONE},
 	load = function()
-		local cache = {parts = Services.Workspace:GetDescendants()}
 		local function forloop()
-			for _,v in ipairs (cache.parts) do
+			for _,v in ipairs (Services.Workspace:GetDescendants()) do
 				if not v:IsA("BasePart") then continue end
-				if v:GetAttribute("cf") then
-					v:Destroy()
+				if (v and v:FindFirstChild("SelectionBox") and v.SelectionBox:GetAttribute("cf")) then
+					v.SelectionBox:Destroy()
 				end
 			end
 		end
 		local c = CoroutineManager:Create("unhitboxloop", forloop)
-		CoroutineManager:Start("hitboxloop")
+		CoroutineManager:Start(c)
 	end,
 }
 
@@ -306,7 +339,44 @@ cmd_table[#cmd_table+1] = {
 	end,
 }
 
+cmd_table[#cmd_table+1] = {
+	names = {"fov"},
+	desc = "Changes your field of view",
+	ctype = {CMD_TYPE.NUMBER},
+	load = function(args)
+		Services.Workspace.CurrentCamera.FieldOfView = args[1]
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"spam"},
+	desc = "really?",
+	ctype = {CMD_TYPE.NUMBER, CMD_TYPE.INF},
+	load = function(args)
+		
+		local text = table.concat(string.split(args[2], " "), " ", 2)
+		
+		local c = CoroutineManager:Create("spam", function()
+			while wait(args[1]) do
+				Services.RepStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, "All")
+			end
+		end)
+		
+		CoroutineManager:Start(c)
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"unspam"},
+	desc = "oh wow",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		CoroutineManager:Close("spam")
+	end,
+}
+
 local function RunCommand (input)
+	local input = string.lower(input)
 	local cache = {
 		str_split1 = string.split(input, " "),
 		str_split2 = string.split(table.concat(string.split(input, " "), " ", 2), " "),
@@ -315,7 +385,7 @@ local function RunCommand (input)
 	
 	local command = cache.str_split1[1]
 	
-	for i,v in ipairs (cache.cmd_table) do
+	for _,v in ipairs (cache.cmd_table) do
 		
 		for i = 1, #v.names,1 do
 			if v.names[i] == command then
@@ -333,6 +403,8 @@ local function RunCommand (input)
 		
 		for i = 1, num_args, 1 do
 			
+			if not cache.str_split2[i] then return end
+			
 			if command.ctype[i] == CMD_TYPE.STRING then
 				args[i] = tostring(cache.str_split2[i])
 			elseif command.ctype[i] == CMD_TYPE.NUMBER then
@@ -349,17 +421,57 @@ local function RunCommand (input)
 			command.load(args)
 		end
 		
-		local c = CoroutineManager:Create("cmd_execution", run)
-		CoroutineManager:Start("cmd_execution")
+		local c = CoroutineManager:Create(Services.Http:GenerateGUID(false), run)
+		CoroutineManager:Start(c)
+		
+	else
+		error("Couldn't find command " .. tostring(command))
 	end
 	
 end
 
-local uis = game.UserInputService
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
+ScreenGui.ResetOnSpawn = false
+
+local TextBox = Instance.new("TextBox")
+TextBox.Parent = ScreenGui
+TextBox.Size = UDim2.fromScale(0.25,0.076)
+TextBox.Position = UDim2.fromScale(0.5,0.759)
+TextBox.AnchorPoint = Vector2.new(0.5,0.5)
+TextBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
+TextBox.Text = "hello :)"
+TextBox.TextColor3 = Color3.fromRGB(255,255,255)
+TextBox.TextSize = 20
+TextBox.FontFace.Bold = true
+TextBox.FontFace.Weight = Enum.FontWeight.Bold
+
+local UICorner = Instance.new("UICorner")
+UICorner.Parent = TextBox
+UICorner.CornerRadius = UDim.new(0.2,0)
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+UIStroke.Parent = TextBox
+UIStroke.Color = Color3.fromRGB(38,255,0)
+UIStroke.LineJoinMode = Enum.LineJoinMode.Round
+UIStroke.Thickness = 1
+
+local uis = Services.UIS
 uis.InputBegan:Connect(function(input, e)
 	if e then return end
 	
-	if input.KeyCode == Enum.KeyCode.E then
-		RunCommand("to me,others")
+	if input.KeyCode == Enum.KeyCode.RightBracket then
+		TextBox:CaptureFocus()
+		spawn(function()
+			repeat TextBox.Text = "" until TextBox.Text == ""
+		end)
+	end
+end)
+
+TextBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		RunCommand(TextBox.Text)
+		TextBox.Text = ""
 	end
 end)
