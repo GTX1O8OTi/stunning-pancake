@@ -4,6 +4,70 @@ local error = erroruiconsole or error
 local warn = warnuiconsole or warn
 local print = printuiconsole or print
 
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
+ScreenGui.ResetOnSpawn = false
+
+local TextBox = Instance.new("TextBox")
+TextBox.Parent = ScreenGui
+TextBox.Size = UDim2.fromScale(0.25,0.076)
+TextBox.Position = UDim2.fromScale(0.5,0.759)
+TextBox.AnchorPoint = Vector2.new(0.5,0.5)
+TextBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
+TextBox.Text = "hello :)"
+TextBox.TextColor3 = Color3.fromRGB(255,255,255)
+TextBox.TextSize = 20
+TextBox.FontFace.Weight = Enum.FontWeight.Bold
+
+local UICorner = Instance.new("UICorner")
+UICorner.Parent = TextBox
+UICorner.CornerRadius = UDim.new(0.2,0)
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+UIStroke.Parent = TextBox
+UIStroke.Color = Color3.fromRGB(38,255,0)
+UIStroke.LineJoinMode = Enum.LineJoinMode.Round
+UIStroke.Thickness = 1
+
+local Frame = Instance.new("Frame")
+Frame.Parent = ScreenGui
+Frame.BackgroundTransparency = 1
+Frame.AutomaticSize = Enum.AutomaticSize.XY
+Frame.Size = UDim2.fromScale(0,0.9)
+Frame.Position = UDim2.fromScale(0.75,0.03)
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = Frame
+UIListLayout.Padding = UDim.new(0.01,0)
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+
+local function Notify (text)
+	local TextLabel = Instance.new("TextLabel")
+	TextLabel.Parent = Frame
+	TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+	TextLabel.BackgroundColor3 = Color3.fromRGB(47,47,47)
+	TextLabel.Size = UDim2.fromScale(0.6,0.08)
+	TextLabel.FontFace.Weight = Enum.FontWeight.Bold
+	TextLabel.TextColor3 = Color3.fromRGB(255,255,255)
+	TextLabel.RichText = true
+	TextLabel.Text = text
+
+	local UICorner = Instance.new("UICorner")
+	UICorner.Parent = TextLabel
+	UICorner.CornerRadius = UDim.new (0.1,0)
+
+	local UIStroke = Instance.new("UIStroke")
+	UIStroke.Parent = TextLabel
+	UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	UIStroke.LineJoinMode = Enum.LineJoinMode.Round
+	UIStroke.Color = Color3.fromRGB(255,255,255)
+	UIStroke.Thickness = 2
+
+	game:GetService("Debris"):AddItem(TextLabel, 1.5)
+end
+
 local function GetCommandPlayer (Text)
 	local SpecialUseCases = {"all","me", "random", "others"}
 	local selected_player = {}
@@ -395,6 +459,8 @@ local function RunCommand (input)
 		
 	end
 	
+	--if typeof(command) ~= "table" then Notify("Couldn't find command") end
+	
 	local args = {}
 	
 	if typeof(command) == "table" then
@@ -425,37 +491,10 @@ local function RunCommand (input)
 		CoroutineManager:Start(c)
 		
 	else
-		error("Couldn't find command " .. tostring(command))
+		Notify("<font color = 'rgb(255,40,0)'>Couldn't</font> find the command " .. "<font color = 'rgb(0,200,255)'>" .. tostring(command) .. "</font>")
 	end
 	
 end
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
-ScreenGui.ResetOnSpawn = false
-
-local TextBox = Instance.new("TextBox")
-TextBox.Parent = ScreenGui
-TextBox.Size = UDim2.fromScale(0.25,0.076)
-TextBox.Position = UDim2.fromScale(0.5,0.759)
-TextBox.AnchorPoint = Vector2.new(0.5,0.5)
-TextBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
-TextBox.Text = "hello :)"
-TextBox.TextColor3 = Color3.fromRGB(255,255,255)
-TextBox.TextSize = 20
-TextBox.FontFace.Bold = true
-TextBox.FontFace.Weight = Enum.FontWeight.Bold
-
-local UICorner = Instance.new("UICorner")
-UICorner.Parent = TextBox
-UICorner.CornerRadius = UDim.new(0.2,0)
-
-local UIStroke = Instance.new("UIStroke")
-UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-UIStroke.Parent = TextBox
-UIStroke.Color = Color3.fromRGB(38,255,0)
-UIStroke.LineJoinMode = Enum.LineJoinMode.Round
-UIStroke.Thickness = 1
 
 local uis = Services.UIS
 uis.InputBegan:Connect(function(input, e)
