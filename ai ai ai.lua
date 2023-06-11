@@ -5,7 +5,7 @@ local warn = warnuiconsole or warn
 local print = printuiconsole or print
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
+ScreenGui.Parent = gethui() or game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
 local TextBox = Instance.new("TextBox")
@@ -125,6 +125,7 @@ local CMD_TYPE = {
 	CMD = 4,
 	NONE = 5,
 	INF = 6,
+	BOOL = 7,
 }
 
 local cmd_table = {}
@@ -133,6 +134,7 @@ local coroutines = {}
 local CoroutineManager = {}
 
 function CoroutineManager:Create(name, func): thread
+	if coroutines[name] then coroutine.close(coroutines[name]) end
 	local c = coroutine.create(func)
 	coroutines[name] = c
 	return c
@@ -472,6 +474,51 @@ cmd_table[#cmd_table+1] = {
 	end,
 }
 
+cmd_table[#cmd_table+1] = {
+	names = {"render"},
+	desc = "Makes your game render or not",
+	ctype = {CMD_TYPE.BOOL},
+	load = function(args)
+		Services.RunS:Set3dRenderingEnabled(args[1])
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"friendlog"},
+	desc = "Notifies when a friend joins the server",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		local c = CoroutineManager:Create("friendlog", function()
+			Services.Players.PlayerAdded:Connect(function(player)
+				if player:IsFriendsWith(Services.Players.LocalPlayer.UserId) then
+					Notify ("<font color='rgb(100,255,0)'>".. player.Name .. "</font> has joined the server")
+				end
+			end)
+		end)
+		CoroutineManager:Start(c)
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"unfriendlog"},
+	desc = "Stops notifying when a friend join",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		CoroutineManager:Close("friendlog")
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"notifypos", "notifyposition"},
+	desc= "Notifies the position of a player",
+	ctype = {CMD_TYPE.PLAYER},
+	load = function(args)
+		for _,v in ipairs(args) do
+			Notify (tostring(v.Character.HumanoidRootPart.Position))
+		end
+	end,
+}
+
 local function RunCommand (input)
 	if input == "" then return end
 	local input = string.lower(input)
@@ -511,6 +558,12 @@ local function RunCommand (input)
 				args[i] = GetCommandPlayer(cache.str_split2[i])
 			elseif command.ctype[i] == CMD_TYPE.INF then
 				args[i] = table.concat(cache.str_split2, " ")
+			elseif command.ctype[i] == CMD_TYPE.BOOL then
+				if cache.str_split2[i] == "true" then
+					args[i] = true
+				elseif cache.str_split2[i] == "false" then
+					args[i] = false
+				end
 			end
 			
 		end
@@ -532,7 +585,6 @@ end
 local uis = Services.UIS
 uis.InputBegan:Connect(function(input, e)
 	if e then return end
-	
 	if input.KeyCode == Enum.KeyCode.RightBracket then
 		TextBox:CaptureFocus()
 		spawn(function()
