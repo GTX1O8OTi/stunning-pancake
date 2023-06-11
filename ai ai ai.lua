@@ -14,10 +14,11 @@ TextBox.Size = UDim2.fromScale(0.25,0.076)
 TextBox.Position = UDim2.fromScale(0.5,0.759)
 TextBox.AnchorPoint = Vector2.new(0.5,0.5)
 TextBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
-TextBox.Text = "hello :)"
+TextBox.PlaceholderText = "hello :)"
 TextBox.TextColor3 = Color3.fromRGB(255,255,255)
 TextBox.TextSize = 20
 TextBox.FontFace.Weight = Enum.FontWeight.Bold
+TextBox.Text = ""
 
 local UICorner = Instance.new("UICorner")
 UICorner.Parent = TextBox
@@ -472,6 +473,7 @@ cmd_table[#cmd_table+1] = {
 }
 
 local function RunCommand (input)
+	if input == "" then return end
 	local input = string.lower(input)
 	local cache = {
 		str_split1 = string.split(input, " "),
