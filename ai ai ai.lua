@@ -53,6 +53,7 @@ local function Notify (text)
 	TextLabel.TextColor3 = Color3.fromRGB(255,255,255)
 	TextLabel.RichText = true
 	TextLabel.Text = text
+	TextLabel.BackgroundTransparency = 1
 
 	local UICorner = Instance.new("UICorner")
 	UICorner.Parent = TextLabel
@@ -64,8 +65,13 @@ local function Notify (text)
 	UIStroke.LineJoinMode = Enum.LineJoinMode.Round
 	UIStroke.Color = Color3.fromRGB(255,255,255)
 	UIStroke.Thickness = 2
-
-	game:GetService("Debris"):AddItem(TextLabel, 1.5)
+	
+	local Tween = game:GetService("TweenService")
+	local info = TweenInfo.new(0.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out, 0, false,0)
+	local tween = Tween:Create(TextLabel, info, {BackgroundTransparency = 0})
+	tween:Play()
+	tween.Completed:Wait()
+	game:GetService("Debris"):AddItem(TextLabel, 1)
 end
 
 local function GetCommandPlayer (Text)
@@ -271,29 +277,34 @@ cmd_table[#cmd_table+1] = {
 	desc = "You see stuff you shouldn't see lol",
 	ctype = {CMD_TYPE.NONE},
 	load = function()
-		local cache = {parts = nil}
-		local c = CoroutineManager:Create("_t1", function()
-			cache.parts = Services.Workspace:GetDescendants()
-		end)
-		CoroutineManager:Start("_t1")
-		repeat task.wait() until cache.parts ~= nil
-		if #cache.parts > 2000 then
+		if #Services.Workspace:GetDescendants() > 2000 then
 			print("This will lag alot")
 		end
 		local function forloop()
-			for _, v in ipairs (cache.parts) do
-				if not v:IsA("BasePart") then continue end
+			
+			local function MakeSelectionBox(object)
 				local box = Instance.new("SelectionBox")
 				box:SetAttribute("cf", 1)
-				box.Parent = v
+				box.Parent = object
 				box.LineThickness = 0.015
-				box.Adornee = v
-				if v.Transparency > 0 then
+				box.Adornee = object
+				if object.Transparency > 0 then
 					box.Color3 = Color3.fromRGB(255,201,252)
 				else
 					box.Color3 = Color3.fromRGB(201,248,255)
 				end
 			end
+			
+			for _, v in ipairs (Services.Workspace:GetDescendants()) do
+				if not v:IsA("BasePart") then continue end
+				MakeSelectionBox(v)
+			end
+			
+			Services.Workspace.DescendantAdded:Connect(function(descendant)
+				if descendant:IsA("BasePart") then
+					MakeSelectionBox(descendant)
+				end
+			end)
 		end
 		
 		local c = CoroutineManager:Create("hitboxloop", forloop)
@@ -306,15 +317,14 @@ cmd_table[#cmd_table+1] = {
 	desc = "e",
 	ctype = {CMD_TYPE.NONE},
 	load = function()
-		local function forloop()
+		local c = CoroutineManager:Create("unhitboxloop", function()
 			for _,v in ipairs (Services.Workspace:GetDescendants()) do
 				if not v:IsA("BasePart") then continue end
 				if (v and v:FindFirstChild("SelectionBox") and v.SelectionBox:GetAttribute("cf")) then
 					v.SelectionBox:Destroy()
 				end
 			end
-		end
-		local c = CoroutineManager:Create("unhitboxloop", forloop)
+		end)
 		CoroutineManager:Start(c)
 	end,
 }
@@ -338,12 +348,15 @@ cmd_table[#cmd_table+1] = {
 	load = function()
 		local cache = {parts = Services.Players.LocalPlayer.Character:GetDescendants()}
 		
-		for _,v in ipairs (cache.parts) do
-			if not v:IsA("BasePart") then continue end
-			if v.CanCollide == false then continue end
-			v.CanCollide = false
-			v:SetAttribute("cf", true)
-		end
+		local c = CoroutineManager:Create("n1", function()
+			for _,v in ipairs (cache.parts) do
+				if not v:IsA("BasePart") then continue end
+				if v.CanCollide == false then continue end
+				v.CanCollide = false
+				v:SetAttribute("cf", true)
+			end
+		end)
+		CoroutineManager:Start(c)
 		
 		local function nc()
 			Services.RunS.Stepped:Connect(function()
@@ -357,6 +370,25 @@ cmd_table[#cmd_table+1] = {
 		end
 
 		local c = CoroutineManager:Create("noclip", nc)
+		CoroutineManager:Start(c)
+	end,
+}
+
+cmd_table[#cmd_table+1] = {
+	names = {"clip", "unnoclip"},
+	desc = "Makes you clip into reality",
+	ctype = {CMD_TYPE.NONE},
+	load = function()
+		CoroutineManager:Close("noclip")
+		
+		local c = CoroutineManager:Create("n2", function()
+			for i,v in ipairs(Services.Players.LocalPlayer.Character:GetDescendants()) do
+				if v:IsA("BasePart") and v:GetAttribute("cf") and v.CanCollide == false then
+					v.CanCollide = true
+					v:SetAttribute("cf", nil)
+				end
+			end
+		end)
 		CoroutineManager:Start(c)
 	end,
 }
@@ -400,6 +432,7 @@ cmd_table[#cmd_table+1] = {
 	ctype = {CMD_TYPE.NONE},
 	load = function()
 		CoroutineManager:Close("view")
+		Services.Workspace.CurrentCamera.CameraSubject = Services.Players.LocalPlayer.Character.Humanoid
 	end,
 }
 
@@ -418,9 +451,8 @@ cmd_table[#cmd_table+1] = {
 	ctype = {CMD_TYPE.NUMBER, CMD_TYPE.INF},
 	load = function(args)
 		
-		local text = table.concat(string.split(args[2], " "), " ", 2)
-		
 		local c = CoroutineManager:Create("spam", function()
+			local text = table.concat(string.split(args[2], " "), " ", 2)
 			while wait(args[1]) do
 				Services.RepStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, "All")
 			end
@@ -459,8 +491,6 @@ local function RunCommand (input)
 		
 	end
 	
-	--if typeof(command) ~= "table" then Notify("Couldn't find command") end
-	
 	local args = {}
 	
 	if typeof(command) == "table" then
@@ -483,15 +513,16 @@ local function RunCommand (input)
 			
 		end
 		
-		local function run()
+		local c = CoroutineManager:Create(Services.Http:GenerateGUID(false), function()
 			command.load(args)
-		end
+		end)
 		
-		local c = CoroutineManager:Create(Services.Http:GenerateGUID(false), run)
 		CoroutineManager:Start(c)
 		
+		Notify("Executed the command " .. "<b><font color = 'rgb(0,200,100)' weight='900'>".. command.names[1] .. "</font></b>")
+		
 	else
-		Notify("<font color = 'rgb(255,40,0)'>Couldn't</font> find the command " .. "<font color = 'rgb(0,200,255)'>" .. tostring(command) .. "</font>")
+		Notify("Couldn't find the command " .. "<font color = 'rgb(0,200,255)'>" .. tostring(command) .. "</font>")
 	end
 	
 end
